@@ -17,7 +17,7 @@ sagaMiddleware.run(rootSaga)
 
 const App = () => (
   <Provider store={store}>
-    <div>{this.props.children}</div>
+    <div>Hello World</div>
   </Provider>
 )
 
