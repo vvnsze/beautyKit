@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import User from 'user.js'
+import User from './user'
 
 module.exports = {
   createUser: function create (userName, name, email, password){
@@ -13,13 +13,12 @@ module.exports = {
     newUser.save(function(err){
       if (err) throw err;
       console.log('User saved successfully');
-      res.json({success: true});
     })
   },
 
   findUser: function find(){
-    User.find({}, (err,users)=>{
-      res.json(users);
+    return User.find({}, (err,users)=>{
+      return(users);
     })
   }
 }

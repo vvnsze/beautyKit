@@ -5,8 +5,7 @@ import bodyparser from 'body-parser'
 import morgan from 'morgan'
 import jsonwebtoken from 'jsonwebtoken'
 import config from '../app.config'
-import UserModel from './models/user.js'
-import User from './models/userModel.js'
+import User from './models/userModel'
 
 const db = mongoose.connection
 const app = express()
@@ -21,7 +20,7 @@ app.set('superSecret', config.secret);
 
 db.on('error',console.error.bind(console,'connection error: '))
 db.once('open',function(){
-  console.log('+++line 22: database is connected')
+  console.log('+++line 23: database is connected')
 })
 
 app.use(express.static(public_root))
@@ -32,26 +31,62 @@ app.use(morgan('dev'))
 
 
 app.get('/', (req,res) => {
-  res.send('+++line 33: Hello! The API is at http://localhost:' + port + '/userLogin');
+  res.send('+++line 34: Hello! The API is at http://localhost:' + port + '/userLogin');
 })
 
-apiRoutes.get('/', (req,res) =>{
+apiRoutes.get('/home', (req, res) =>{
   res.json({message: 'Welcome to the cooolest API on earth!'})
 })
 
-apiRoutes.get('/users', (req, res) => {
-  User.find({}, function(err, users) {
-    res.json(users);
+apiRoutes.post('/user',(req,res)=>{
+  console.log('+++line 42 this is the req.body: ', req.body)
+  res.send({message:'success'});
+  User.createUser(req.body.userName, req.body.name, req.body.email, req.body.password)
+})
+
+
+apiRoutes.get('/user', (req, res) => {
+  User.findUser().then((response)=>{
+    res.send(response)
   });
 });
 
-apiRoutes.get('/users', (req, res) => {
-  User.find({}, function(err, users) {
-    res.json(users);
-  });
-});
+apiRoutes.post('/authenticate', function(req, res) {
 
-app.use('/userAuth',apiRoutes)
+  // find the user
+  User.findOne({
+    name: req.body.name
+  }, function(err, user) {
+
+    if (err) throw err;
+
+    if (!user) {
+      res.json({ success: false, message: 'Authentication failed. User not found.' });
+    } else if (user) {
+
+      // check if password matches
+      if (user.password != req.body.password) {
+        res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+      } else {
+        var token = jwt.sign(user, app.get('superSecret'), {
+            expiresInMinutes: 1440 // expires in 24 hours
+          });
+
+          // return the information including token as JSON
+          res.json({
+            success: true,
+            message: 'Enjoy your token!',
+            token: token
+          });
+        }
+
+      }
+
+    });
+  });
+
+
+app.use('/api', apiRoutes)
 
 app.get('*', (req, res) => {
   res.sendFile('index.html', {
